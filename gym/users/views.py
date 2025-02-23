@@ -1,39 +1,47 @@
-import datetime
-
-from django.shortcuts import render, get_object_or_404
-from django.views.generic import ListView, DetailView, FormView
-from .models import User, Subscription, Contact
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, permission_required
-from django.http import HttpResponseRedirect
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.urls import reverse
-from .my_utils import send_email
+from django.core.mail import send_mail
 from .forms import ContactForm
+from .models import Staff, Subscription
 
-def index(request):
-    return render(request, 'index.html')
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from .serializers import UserSerializer
 
+User = get_user_model()
 
-class ListUsers(ListView):
-    """Listing all users except of those who are staff memmbers"""
+class UserCreateView(CreateAPIView):
+    """Endpoint to register a new user"""
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [AllowAny] # Anyone can register
 
-    model = User
-    template_name = 'users/list_users.html'
-    context_object_name = 'user_list'
-
+class UserListView(ListAPIView):
+    """Returns a list of users (admins see all, non admin users see only their data)."""
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+    
     def get_queryset(self):
-        qs = User.objects.all().exclude(is_staff=True)
-        return qs
+        user = self.request.user
+        if user.is_staff:
+            return User.objects.all() # Admins can see all users
+        return User.objects.filter(id=user.id) # users can see only their data
 
-    def usersList(request, qs):
-        return render(request, 'users/list_users', qs=qs)
+class UserDetailView(ListAPIView):
+    """Returns a details of all users (admins see all, non admin users see only their data)."""
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return User.objects.all() # Admins can access all users
+        return User.objects.filter(id=user.id) # users can access only their data
 
-class DetailUser(DetailView):
-    """User's details"""
 
-    models = User
-    template_name = 'users/details_user.html'
-    context_object_name = 'user_details'
 
 class ListSubscriptions(ListView):
     """Listing all subscriptions"""
@@ -60,15 +68,47 @@ def get_users_details(request, pk):
     return render(request, 'users/detail_user.html', userDetails=userDetails)
 
 class ContactView(FormView):
-    template_name = "users/contact.html"
+    template_name = "contact.html"
     model = Contact
     context_object_name = 'contact'
     form_class = ContactForm
 
     def form_valid(self, form):
-        recipients = form.cleaned_data.get('recipients')
+        from_email = form.cleaned_data.get('from_email')
         message = form.cleaned_data.get('message')
         subject = form.cleaned_data.get('subject')
-        send_email(subject, recipients, message)
+        send_mail(subject, from_email, message)
 
-        return super().firm_valid(form)
+        return super().form_valid(form)
+    
+class RegisterView(FormView):
+    def register(request):
+        if request.method == "POST":
+            form = UserCreationForm(request.POST)
+            if form.is_valid():
+                user = form.save()
+                login(request, user)
+                return redirect(reverse("index"))
+        else:
+            form = UserCreationForm()
+        return render(request, "registration/register.html", {"form": form})
+
+class LoginView(FormView):
+    def login(request):
+        if request.method == "POST":
+            form = AuthenticationForm(request.POST)
+            if form.is_valid():
+                return redirect(reverse("index"))
+        else:
+            form = AuthenticationForm()
+        return render(request, "registration/login.html", {"form": form})
+
+class LogoutView(FormView):
+    def logout(request):
+        if request.method == "POST":
+            form = AuthenticationForm(request.POST)
+            if form.is_valid():
+                return redirect(reverse("index"))
+        else:
+            form = AuthenticationForm()
+        return render(request, "registration/logout.html", {"form": form})

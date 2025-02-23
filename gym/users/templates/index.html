@@ -2,5 +2,5 @@
 {% block title %} Homepage {% endblock %}
 
 {% block content %}
-
+<h2>Hello, {{ user.last_name|default:"Guest" }}! </h2>
 {% endblock %}
