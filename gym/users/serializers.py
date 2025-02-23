@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from .models import Subscription, Staff, Contact, Classes
 
 User = get_user_model()
 
@@ -18,3 +19,23 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         return user 
         
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscription
+        fields = ["id", "billing_duration", "fees", "description", "created_at", "updated_at"]
+        extra_kwargs = {"author": {"read_only":True}}
+
+class StaffSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Staff
+        fields = ["id", "trainer_last_name", "trainer_first_name", "trainer_classes"]
+
+class ContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = ["id", "name", "email", "subject", "message", "created_at"]
+
+class ClassesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Classes
+        fields = ["id", "class_name", "class_date", "class_time", "trainer_name", "description", "location_of_the_class"]

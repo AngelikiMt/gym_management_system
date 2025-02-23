@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 
 BILLING_DURATION_CHOICES = (
     ("MONTHLY", "Monthly"),
@@ -77,52 +77,64 @@ class StaffUser(AbstractBaseUser, PermissionsMixin):
         return self.email
 '''
 class Subscription(models.Model):
-    billing_duration = models.CharField("Billing Duration", max_length=20, choices=BILLING_DURATION_CHOICES, null=True, blank=True)
+    billing_duration = models.CharField(max_length=20, choices=BILLING_DURATION_CHOICES, null=True, blank=True)
     fees = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    author = models.ForeignKey("Staff", on_delete=models.RESTRICT)
 
     class Meta:
-        ordering = ['-billing_duration']
+        ordering = ['billing_duration']
         verbose_name_plural = 'Subscription'
 
     def __str__(self):
         return f"{self.billing_duration}"
 
-#    def save(self, *args, **kwargs):
-#        """On save update timestamps"""
-#        if not self.id:
-#            self.created_at = timezone.now()
-#        self.updated_at = timezone.now()
-#        return super(Subscription, self).save(*args,**kwargs)
-
+'''   def save(self, *args, **kwargs):
+       """On save update timestamps"""
+       if not self.id:
+           self.created_at = timezone.now()
+       self.updated_at = timezone.now()
+       return super(Subscription, self).save(*args,**kwargs)
+'''
 class Classes(models.Model):
     class_name = models.CharField("Class Name", max_length=20)
     class_date = models.DateField("Class Date")
     class_time = models.TimeField("Class Time")
-    trainer_name = models.ForeignKey("Staff", on_delete=models.RESTRICT, max_length=50)
+    trainer_name = models.ForeignKey("Staff", on_delete=models.RESTRICT)
     description = models.CharField(help_text="Please, enter class description", max_length=500)
-    space = models.CharField(help_text="Please, enter where the class will be located", max_length=50)
+    location_of_the_class = models.CharField(max_length=50)
 
     class Meta:
         ordering = ['-class_date', '-class_time']
 
     def __str__(self):
-        return f"{self.class_name} {self.space}"
+        return f"{self.class_name} {self.location_of_the_class}"
 
 class Staff(models.Model):
-    trainer_name = models.CharField("Name of the trainer", max_length=50)
+    trainer_last_name = models.CharField(max_length=50)
+    trainer_first_name = models.CharField(max_length=50)
     trainer_classes = models.ForeignKey("Classes", on_delete=models.RESTRICT, null=True, blank=True)
 
     class Meta:
-        ordering = ['-trainer_name']
+        ordering = ['trainer_last_name', 'trainer_first_name']
         verbose_name_plural = 'Staff'
 
     def __str__(self):
-        return f"{self.trainer_name}"
+        return f"{self.trainer_last_name} {self.trainer_first_name}"
 
 class Contact(models.Model):
-    pass
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    subject = models.CharField(max_length=200)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["-created_at"] 
+
+    def __str__(self):
+        return f"message from {self.name} - {self.subject}"
+ 
 
