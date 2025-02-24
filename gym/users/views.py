@@ -1,16 +1,16 @@
-from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.urls import reverse
+from django.contrib.auth import get_user_model, authenticate
 from django.core.mail import send_mail
 from django.conf import settings
 from .models import Staff, Subscription, Contact, Classes
+from .serializers import UserSerializer, SubscriptionSerializer, ClassesSerializer, StaffSerializer, ContactSerializer
 
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
-from .serializers import UserSerializer, SubscriptionSerializer, ClassesSerializer, StaffSerializer, ContactSerializer
+from rest_framework.generics import ListAPIView, CreateAPIView, UpdateAPIView, RetrieveAPIView, DestroyAPIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
@@ -18,21 +18,21 @@ class UserCreateView(CreateAPIView):
     """Endpoint to register a new user"""
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [AllowAny] # Anyone can register
+    permission_classes = [AllowAny]
 
 class UserListView(ListAPIView):
-    """Returns a list of users (admins see all, non admin users see only their data)."""
+    """Admins see all users. Non admin users see only their data."""
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
-            return User.objects.all() # Admins can see all users
-        return User.objects.filter(id=user.id) # users can see only their data
+            return User.objects.all()
+        return User.objects.filter(id=user.id)
 
 class UserDetailView(RetrieveAPIView):
-    """Returns details of all users (admins see all, non admin users see only their data)."""
+    """Admins see details of all users. Non admin users see only their own details."""
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
     
@@ -42,87 +42,143 @@ class UserDetailView(RetrieveAPIView):
             return User.objects.all() # Admins can access all users
         return User.objects.filter(id=user.id) # users can access only their data
 
-
-
-
-class CreateSubscription(CreateAPIView):
-    """Endpoint for creating a new subscription"""
-    serializer_class = SubscriptionSerializer
-    permission_classes = [IsAdminUser]
-
-    def get_queryset(self):
-        user = self.request.user
-        if not user.is_staff:
-            return PermissionDenied("Permission required to create a Subscription")
-        return Subscription.objects.all()
-
-class ListSubscriptions(ListAPIView):
-    """Returns a list of all subscriptions"""
-    model = Subscription
-    queryset = Subscription.objects.all()
-    serializer_class = SubscriptionSerializer
-    permission_classes = [AllowAny]
-
-class DetailsSubscription(RetrieveAPIView):
-    """Returns details of all subscriptions"""
-    model = Subscription
-    queryset = Subscription.objects.all()
-    serializer_class = SubscriptionSerializer
-    permission_classes = [AllowAny]
-
-
-
-class CreateStaff(CreateAPIView):
-    """Endpoint for  creating a new staff member"""
-    serializer_class = StaffSerializer
-    permission_classes = [IsAdminUser]
-
-    def get_queryset(self):
-        user = self.request.user
-        if not user.is_staff:
-            return PermissionDenied("Permission required to create a stafff member")
-        return Staff.objects.all()
-    
-class ListStaff(ListAPIView):
-    """Returns a list of all staff members"""
-    model = Staff
-    queryset = Staff.objects.all()
-    serializer_class = StaffSerializer
-    permission_classes = [AllowAny]
-
-class DetailsStaff(RetrieveAPIView):
-    """"Returns the details of all staff accessed from all users"""
-    model = Staff
-    queryset = Staff.objects.all()
-    serializer_class = StaffSerializer
-    permission_classes = [AllowAny]
-
-
-
-class CreateClasses(CreateAPIView):
-    """Endpoint for  creating a new class"""
-    serializer_class = ClassesSerializer
+class DeactivateUserView(UpdateAPIView):
+    """Admins can deactivate any user, non admin users can deactivate only their account."""
+    serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
+        if user.is_staff:
+            return User.objects.all()
+        return User.objects.filter(id=user.id)
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.is_active = False
+        instance.save()
+        return Response({"message": "User deactivated successfully!"}, status=status.HTTP_200_OK)
+
+class LoginView(APIView):
+    """Login endpoint that returns JWT token."""
+    permission_classes = [AllowAny]
+
+    def post(self,request):
+        username = request.data.get("username")
+        password = request.data.get("password")
+
+        user = authenticate(username=username, password=password)
+        if user:
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            }, status=status.HTTP_200_OK)
+        return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
+class LogoutView(APIView):
+    """Logout endpoint to blacklist the refresh token."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"message": "Successfully logged out!"}, staus=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CreateSubscriptionView(CreateAPIView):
+    """Endpoint for creating a new subscription (Admins only)."""
+    queryset = Subscription.objects.all()
+    serializer_class = SubscriptionSerializer
+    permission_classes = [IsAdminUser]
+
+class ListSubscriptionsView(ListAPIView):
+    """Returns a list of all subscriptions."""
+    queryset = Subscription.objects.all()
+    serializer_class = SubscriptionSerializer
+    permission_classes = [AllowAny]
+
+class DetailsSubscriptionView(RetrieveAPIView):
+    """Returns details of a single subscription."""
+    queryset = Subscription.objects.all()
+    serializer_class = SubscriptionSerializer
+    permission_classes = [AllowAny]
+
+class DeleteSubscriptionView(DestroyAPIView):
+    """Deletes a subscription (Admins only)."""
+    queryset = Subscription.objects.all()
+    serializer_class = SubscriptionSerializer
+    permission_classes = [IsAdminUser]
+
+
+
+class CreateStaffView(CreateAPIView):
+    """Endpoint for creating a new staff member."""
+    queryset = Staff.objects.all()
+    serializer_class = StaffSerializer
+    permission_classes = [IsAdminUser]
+    
+class ListStaffView(ListAPIView):
+    """Returns a list of all staff members"""
+    queryset = Staff.objects.filter(is_active="True")
+    serializer_class = StaffSerializer
+    permission_classes = [AllowAny]
+
+class DetailsStaffView(RetrieveAPIView):
+    """"Returns the details of all staff accessed from all users"""
+    queryset = Staff.objects.filter(is_active="True")
+    serializer_class = StaffSerializer
+    permission_classes = [AllowAny]
+
+class DeactivateStaffView(UpdateAPIView):
+    """Only admins can deactivate a staff member instead of deleting them."""
+    queryset = Staff.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAdminUser]
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.is_active = False
+        instance.save()
+        return Response({"message": "Staff member deactivated successfully!"}, status=status.HTTP_200_OK)
+
+
+
+
+class CreateClassesView(CreateAPIView):
+    """Endpoint for creating a new class (Admins only)."""
+    queryset = Classes.objects.all()
+    serializer_class = ClassesSerializer
+    permission_classes = [IsAdminUser]
+
+class ListClassesView(ListAPIView):
+    """Returns a list of all classes."""
+    queryset = Classes.objects.all()
+    serializer_class = ClassesSerializer
+    permission_classes = [AllowAny]
+
+class DetailsClassesView(RetrieveAPIView):
+    """Returns the details of a class."""
+    queryset = Classes.objects.all()
+    serializer_class = ClassesSerializer
+    permission_classes = [AllowAny]
+
+class DeleteClassesView(DestroyAPIView):
+    """Deletes a class (Admins only)."""
+    quesyset = Classes.objects.all()
+    serializer_class = ClassesSerializer
+    permission_classes = [IsAdminUser]
+
+    def perform_destroy(self, instance):
+        user = self.request.user
         if not user.is_staff:
-            return PermissionDenied("Permission required to create a class")
-        return Classes.objects.all()
-
-class ListClasses(ListAPIView):
-    """Returns a list of all classes"""
-    model = Classes
-    queryset = Classes.objects.all()
-    serializer_class = ClassesSerializer
-    permission_classes = [AllowAny]
-
-class DetailsClasses(RetrieveAPIView):
-    """Returns the details of the classes"""
-    model = Classes
-    queryset = Classes.objects.all()
-    serializer_class = ClassesSerializer
-    permission_classes = [AllowAny]
+            raise PermissionDenied("Permission required to delete a class.")
+        instance.delete()
+        return Response({"message": "Class deleted successfully!"}, status=status.HTTP_204_NO_CONTENT)
 
 
 
@@ -136,13 +192,13 @@ class CreateContactView(CreateAPIView):
         contact = serializer.save() 
 
         subject = f"New Contact Form Submission: {contact.subject}"
-        message = f""
+        message = f"""
         Name: {contact.name}
         Email: {contact.email}
         Subject: {contact.subject}
-
         Message: {contact.message}
-        recipient_email = settings.CONTACT_EMAIL # Email where form submissions are sent
+        """
+        recipient_email = settings.CONTACT_EMAIL
         send_mail(subject, message, contact.email, [recipient_email])
 
         return Response({"message": "Contact form submitted successfully!"}, status=status.HTTP_201_CREATED)
@@ -151,39 +207,3 @@ class ListContactView(ListAPIView):
     queryset = Contact.objects.all()
     serializer_class = ContactSerializer
     permission_classes = [IsAdminUser]
-
-
-
-
-
-class RegisterView(FormView):
-    def register(request):
-        if request.method == "POST":
-            form = UserCreationForm(request.POST)
-            if form.is_valid():
-                user = form.save()
-                login(request, user)
-                return redirect(reverse("index"))
-        else:
-            form = UserCreationForm()
-        return render(request, "registration/register.html", {"form": form})
-
-class LoginView(FormView):
-    def login(request):
-        if request.method == "POST":
-            form = AuthenticationForm(request.POST)
-            if form.is_valid():
-                return redirect(reverse("index"))
-        else:
-            form = AuthenticationForm()
-        return render(request, "registration/login.html", {"form": form})
-
-class LogoutView(FormView):
-    def logout(request):
-        if request.method == "POST":
-            form = AuthenticationForm(request.POST)
-            if form.is_valid():
-                return redirect(reverse("index"))
-        else:
-            form = AuthenticationForm()
-        return render(request, "registration/logout.html", {"form": form})

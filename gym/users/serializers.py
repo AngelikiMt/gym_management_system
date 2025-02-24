@@ -22,20 +22,19 @@ class UserSerializer(serializers.ModelSerializer):
 class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
-        fields = ["id", "billing_duration", "fees", "description", "created_at", "updated_at"]
-        extra_kwargs = {"author": {"read_only":True}}
+        fields = ["id", "subscription", "fees", "description", "created_at", "updated_at"]
 
 class StaffSerializer(serializers.ModelSerializer):
     class Meta:
         model = Staff
-        fields = ["id", "trainer_last_name", "trainer_first_name", "trainer_classes"]
+        fields = ["id", "trainer_last_name", "trainer_first_name", "trainer_classes", "is_active"]
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
-        fields = ["id", "name", "email", "subject", "message", "created_at"]
+        fields = ["id", "name", "phone_number", "email", "subject", "message", "created_at"]
 
 class ClassesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Classes
-        fields = ["id", "class_name", "class_date", "class_time", "trainer_name", "description", "location_of_the_class"]
+        fields = ["id", "class_name", "class_date", "class_time", "trainer", "description", "location_of_the_class", "capacity"]
