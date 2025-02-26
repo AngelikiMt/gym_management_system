@@ -12,7 +12,7 @@ PAYMENT_METHODS = (
     ("CARD", "Credit/Debit Card"),
     ("CASH", "Cash"),
     ("INSTALLMENTS", "Installments"),
-    ("paypal", "PayPal"),
+    ("PAYPAL", "PayPal"),
 )
 
 CAPACITY = (
@@ -24,12 +24,12 @@ CAPACITY = (
 
 class User(AbstractUser):
     dob = models.DateField("Date of Birth", null=True, blank=True)
-    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    user_phone_number = models.CharField(max_length=50, blank=True, null=True)
     modified = models.DateTimeField("Date of Modified", auto_now=True)
     last_signed_in = models.DateTimeField("Last Signed In", auto_now=True)
-    subscription = models.ForeignKey("Subscription", on_delete=models.RESTRICT, null=True, blank=True)
+    subscription = models.ForeignKey("Subscription", on_delete=models.SET_NULL, null=True, blank=True)
     discount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    classes_booked = models.ForeignKey("Classes", on_delete=models.RESTRICT, null=True, blank=True)
+    classes_booked = models.ForeignKey("Classes", on_delete=models.SET_NULL, null=True, blank=True)
 
     payment_method = models.CharField("Payment Method", max_length=20, choices=PAYMENT_METHODS, null=True, blank=True)
     is_paid = models.BooleanField("Subscription Payment", default=False)
@@ -59,7 +59,7 @@ class Classes(models.Model):
     class_name = models.CharField(max_length=20, null=True, blank=True)
     class_date = models.DateField(null=True, blank=True)
     class_time = models.TimeField(null=True, blank=True)
-    trainer = models.ForeignKey("Staff", on_delete=models.RESTRICT, null=True, blank=True)
+    trainer = models.ForeignKey("Staff", on_delete=models.SET_NULL, null=True, blank=True)
     description = models.CharField(max_length=500, null=True, blank=True)
     location_of_the_class = models.CharField(max_length=50, null=True, blank=True)
     max_capacity = models.IntegerField(choices=CAPACITY, null=True, blank=True)
@@ -73,7 +73,10 @@ class Classes(models.Model):
 class Staff(models.Model):
     trainer_last_name = models.CharField(max_length=50, null=True, blank=True)
     trainer_first_name = models.CharField(max_length=50, null=True, blank=True)
+    trainer_phone_number = models.CharField(max_length=100, null=True, blank=True)
+    trainer_email = models.EmailField(max_length=50, blank=True, null=True)
     trainer_classes = models.ManyToManyField("Classes", blank=True)
+    hiring_day = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
 
     class Meta:
