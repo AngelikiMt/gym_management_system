@@ -17,7 +17,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-_d=_@*m_t7i$h%&)_#1&rz-oybeu%r0^5s_o9gf&==r!57vmk%'
+SECRET_KEY = 'aKey'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -66,7 +66,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True  # Για δοκιμές, όχι για production!
+CORS_ALLOW_ALL_ORIGINS = True  # Only for development, not for production!
 
 ROOT_URLCONF = 'gym.urls'
 
@@ -97,7 +97,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'gym',
         'USER': 'Admin',
-        'PASSWORD': 'QRYIfjks!4179',
+        'PASSWORD': 'aPassword',
         'HOST': 'localhost',
         'PORT': '3306',
     }
