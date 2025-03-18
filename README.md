@@ -1,8 +1,7 @@
-# 🏋️‍♂️ Gym Management System
-
+## Gym Management System
 A Gym Management System built with **Django (backend)** to manage gym memberships, subscriptions, class schedules, and trainers efficiently.
 
-## 🚀 Features
+## Features
 - **User Authentication:** Secure login/logout system for admins and trainers.
 - **Membership Management:** Add, update, and delete members.
 - **Subscription Plans:** Different billing durations and pricing.
@@ -10,14 +9,13 @@ A Gym Management System built with **Django (backend)** to manage gym membership
 - **Trainer Management:** View and manage trainer assignments.
 - **Admin Panel:** Django Admin integration for easy backend management.
 
-## 🛠️ Technologies Used
-### **Backend (Django)**
+## Technologies Used
 - Python & Django REST Framework (DRF)
 - MySQL Database (Configurable)
 - Django Serializers & Views
 - JWT Authentication
 
-## 📌 Installation Guide
+## Installation Guide
 ### ** Backend Setup (Django)**
 #### **Prerequisites**
 - Install Python (>=3.8)
