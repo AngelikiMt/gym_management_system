@@ -1,6 +1,6 @@
 # 🏋️‍♂️ Gym Management System
 
-A Gym Management System built with **Django (backend) and React (frontend)** to manage gym memberships, subscriptions, class schedules, and trainers efficiently.
+A Gym Management System built with **Django (backend)** to manage gym memberships, subscriptions, class schedules, and trainers efficiently.
 
 ## 🚀 Features
 - **User Authentication:** Secure login/logout system for admins and trainers.
@@ -17,16 +17,8 @@ A Gym Management System built with **Django (backend) and React (frontend)** to 
 - Django Serializers & Views
 - JWT Authentication
 
-### **Frontend (React)**
-- React.js & Vite
-- Tailwind CSS / Bootstrap
-- Axios for API calls
-
----
-
 ## 📌 Installation Guide
-
-### **1️⃣ Backend Setup (Django)**
+### ** Backend Setup (Django)**
 #### **Prerequisites**
 - Install Python (>=3.8)
 - Install MySQL Server
