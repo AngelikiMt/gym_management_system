@@ -33,7 +33,7 @@ A Gym Management System built with **Django (backend)** to streamline and manage
 
 ## Install
 
-1. Clone the repository
+1. Clone repository
 ```
 git clone https://github.com/your-username/gym-management-system.git
 ```
@@ -44,12 +44,12 @@ python -m venv .venv
 .venv/Scripts/activate 
 ```
 
-3. Install the Required packages
+3. Install Required packages
 ```
 pip install -r requirements.txt
 ```
 
-4. Run the project locally
+4. Run project locally
 ```
 python manage.py runserver
 ```
