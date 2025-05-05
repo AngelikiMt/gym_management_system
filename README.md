@@ -1,5 +1,5 @@
-## Gym Management System
-A Gym Management System built with **Django (backend)** to manage gym memberships, subscriptions, class schedules, and trainers efficiently.
+# Gym Management System
+A Gym Management System built with **Django (backend)** to streamline and manage operations, including memberships, subscriptions, class schedules, and trainer assignments/info. This system aims to improve administrative efficiency and enhance the user experience for both gym and staff.
 
 ## Features
 - **User Authentication:** Secure login/logout system for admins and trainers.
@@ -10,18 +10,46 @@ A Gym Management System built with **Django (backend)** to manage gym membership
 - **Admin Panel:** Django Admin integration for easy backend management.
 
 ## Technologies Used
-- Python & Django REST Framework (DRF)
+- Python & Django REST Framework 
 - MySQL Database (Configurable)
 - Django Serializers & Views
 - JWT Authentication
 
-## Installation Guide
-### ** Backend Setup (Django)**
-#### **Prerequisites**
-- Install Python (>=3.8)
-- Install MySQL Server
+| Requirements                           |
+| ------------                           |
+| asgiref >= 3.8.1                       |
+| Django >= 5.1.5                        |
+| django-cors-headers >= 4.7.0           |
+| djangorestframework >= 3.15.2          |
+| djangorestframework_simplejwt >= 5.4.0 |
+| psycopg2-binary >= 2.9.10              |
+| PyJWT >= 2.10.1                        |
+| python-dotenv >= 1.0.1                 |
+| pytz >= 2025.1                         |
+| sqlparse >= 0.5.3                      |
+| tzdata >= 2025.1                       |
 
-#### **Clone the Repository**
-```sh
+
+
+## Install
+
+1. Clone the repository
+```
 git clone https://github.com/your-username/gym-management-system.git
-cd gym-management-system
+```
+
+2. Create a virtual environment in PowerShell terminal and activate it:      
+``` 
+python -m venv .venv
+.venv/Scripts/activate 
+```
+
+3. Install the Required packages
+```
+pip install -r requirements.txt
+```
+
+4. Run the project locally
+```
+python manage.py runserver
+```
